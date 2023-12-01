@@ -22,46 +22,36 @@ func main() {
 	if err != nil {
 		fmt.Println("Err", err)
 	}
-	if len(content) == 0 {
-		fmt.Println("Empty file")
-		return
-	}
 
 	digits := []int{}
 	sum := 0
 	idx := 0
 	for {
 		r := content[idx]
+		skipCount := 1
 		switch {
 		case r >= '0' && r <= '9':
 			digits = append(digits, int(r-'0'))
-			idx++
-		case r == '\n':
-			first := digits[0]
-			last := digits[len(digits)-1]
-			lineValue := first*10 + last
-			sum += lineValue
+		case r == '\n' || idx == len(content)-1: // end of line or end of file
+			sum += digits[0]*10 + digits[len(digits)-1]
 			digits = []int{}
-			idx++
 		default:
-			skipCount := 1
 			for i, word := range wordList {
-				if idx+len(word) < len(content) {
-					candidate := string(content[idx : idx+len(word)])
-					if candidate == word {
-						digits = append(digits, i+1)
-						skipCount = len(word) - 1
-						break
-					}
+				if idx+len(word) >= len(content) {
+					continue
+				}
+				candidate := string(content[idx : idx+len(word)])
+				if candidate == word {
+					digits = append(digits, i+1)
+					skipCount = len(word) - 1
+					break
 				}
 			}
-			idx += skipCount
-
 		}
+		idx += skipCount
 		if idx == len(content) {
 			break
 		}
 	}
 	fmt.Println("Sum:", sum)
-
 }
