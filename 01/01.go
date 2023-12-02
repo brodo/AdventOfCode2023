@@ -26,7 +26,7 @@ func main() {
 	digits := []int{}
 	sum := 0
 	idx := 0
-	for {
+	for idx < len(content) {
 		r := content[idx]
 		skipCount := 1
 		switch {
@@ -49,9 +49,6 @@ func main() {
 			}
 		}
 		idx += skipCount
-		if idx == len(content) {
-			break
-		}
 	}
 	fmt.Println("Sum:", sum)
 }
