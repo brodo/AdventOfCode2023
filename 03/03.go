@@ -65,20 +65,20 @@ type Entity struct {
 	eType EntityType
 }
 
-func (e *Entity) String() string {
+func (e Entity) String() string {
 	switch e.eType {
 	case Gear:
 		return "*"
 	case Nothing:
-		return "o"
+		return "."
 	default:
 		return "#"
 	}
 
 }
 
-func (pn *Entity) Len() int {
-	return int(math.Log10(float64(pn.value))) + 1
+func (e Entity) Len() int {
+	return int(math.Log10(float64(e.value))) + 1
 }
 
 func part2(inputLines []string) int {
@@ -95,19 +95,35 @@ func part2(inputLines []string) int {
 				currNumber = currNumber*10 + int(char-'0')
 				inNumber = true
 			}
-			if !isNumber(char) || x == len(line)-1 {
+			if !isNumber(char) {
 				if inNumber {
 					inNumber = false
 					entity := Entity{
 						value: currNumber,
 						eType: PartNumber,
 					}
+
 					for i := x - entity.Len(); i < x; i++ {
 						schematic[y][i] = entity
 					}
 					currNumber = 0
 				}
 			}
+			if x == len(line)-1 {
+				if inNumber {
+					inNumber = false
+					entity := Entity{
+						value: currNumber,
+						eType: PartNumber,
+					}
+
+					for i := x - entity.Len() + 1; i < x+1; i++ {
+						schematic[y][i] = entity
+					}
+					currNumber = 0
+				}
+			}
+
 			if char == '*' {
 				schematic[y][x] = Entity{
 					value: 0,
@@ -190,11 +206,38 @@ func part2(inputLines []string) int {
 		}
 
 		if len(entities) == 2 {
-			partNumber := entities[0].value * entities[1].value
-			sum += partNumber
+			sum += entities[0].value * entities[1].value
 		}
 
 	}
+
+	fo, err := os.Create("03/table.html")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	w := bufio.NewWriter(fo)
+
+	fmt.Fprintln(w, "<html><head><title>03</title></head><body><table>")
+	for y, entities := range schematic {
+		fmt.Fprintln(w, "<tr>")
+		for x, e := range entities {
+			style := ""
+			if e.eType == Gear {
+				style = "border: solid red"
+			} else if e.eType == PartNumber {
+				style = "border: solid green"
+			}
+			fmt.Fprintf(w, "<td style=\"%s\">%c</td>", style, inputLines[y][x])
+		}
+		fmt.Fprintln(w, "</tr>")
+	}
+	fmt.Fprintln(w, "</table></body></html>")
+	w.Flush()
 
 	return sum
 }
@@ -205,7 +248,11 @@ func main() {
 		log.Fatal(err)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	schematic := make([]string, 0)
